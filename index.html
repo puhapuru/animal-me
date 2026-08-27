@@ -91,6 +91,10 @@
 
             <!-- Customization Controls -->
             <div class="controls-toolbar">
+                <!-- 리얼 변환은 업로드 후 자동 실행. 아래는 재변환(수동) -->
+                <button type="button" class="btn btn-primary" id="btnRealRender" style="width:100%;margin-bottom:10px;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ 다시 변환
+                </button>
                 <div class="animal-selector-title">동물 분장 변경:</div>
                 <div class="animal-chips-scroll" id="animalChips">
                     <!-- Dynamic animal buttons inserted via JS -->
@@ -131,10 +135,7 @@
                         <i class="fa-solid fa-share-nodes"></i> 공유하기
                     </button>
                 </div>
-                <!-- 리얼 변환 (ComfyUI SDXL) — 기본 모드. 이미지만 서버 전송 후 즉시 폐기 -->
-                <button type="button" class="btn btn-primary" id="btnRealRender" style="width:100%;margin-bottom:8px;">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> 🎨 이 스타일로 변환하기 (약 30초)
-                </button>
+                <!-- 리얼 변환은 업로드 후 자동 실행 -->
 
                 <button type="button" class="btn btn-outline btn-reset" id="btnReset">
                     <i class="fa-solid fa-arrow-rotate-left"></i> 다른 사진 올리기

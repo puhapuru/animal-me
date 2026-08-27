@@ -322,6 +322,9 @@ async function processFaceImage(img) {
         renderCurrentResult();
         showView('result');
 
+        // 리얼 변환 자동 시작 (버튼 없음 — 2026-08-27 사용자 지시)
+        handleRealRender();
+
     } catch (err) {
         console.error('얼굴 분석 중 에러:', err);
         showError('얼굴을 분석하는 도중 오류가 발생했습니다. 다른 사진으로 시도해주세요.');
