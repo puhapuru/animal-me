@@ -292,7 +292,7 @@ function handleFileSelect(file) {
 }
 
 // --- 얼굴 이미지 분석 및 렌더링 파이프라인 ---
-async function processFaceImage(img) {
+async function processFaceImage(img, opts = {}) {
     currentImage = img;
     showView('processing');
 
@@ -322,8 +322,10 @@ async function processFaceImage(img) {
         renderCurrentResult();
         showView('result');
 
-        // 리얼 변환 자동 시작 (버튼 없음 — 2026-08-27 사용자 지시)
-        handleRealRender();
+        // 리얼 변환 자동 시작 — 업로드된 원본일 때만 1회 (변환 결과 재분석 시엔 스킵 → 무한루프 방지)
+        if (!opts.fromRealRender) {
+            handleRealRender();
+        }
 
     } catch (err) {
         console.error('얼굴 분석 중 에러:', err);
@@ -977,7 +979,7 @@ async function handleRealRender() {
 
         // 단일 프록시 시도 (공개 HTTPS 경유 — 인터넷 어디서든)
         let res = null;
-        for (const base of ['https://songs-widely-radar-leslie.trycloudflare.com']) {
+        for (const base of ['https://egg-inclusive-bufing-tub.trycloudflare.com']) {
             try {
                 const resp = await fetch(base + '/api/transform', {
                     method: 'POST',
@@ -1011,7 +1013,7 @@ async function handleRealRender() {
         });
         currentImage = img;
         showToast('✨ 리얼 변환 완료!');
-        await processFaceImage(img);
+        await processFaceImage(img, { fromRealRender: true });
     } catch (err) {
         console.warn('리얼 변환 실패 → 캔버스 모드로 계속:', err);
         showToast('⚠️ 서버가 바쁩니다 — 현재 화면 스타일을 그대로 사용하세요');

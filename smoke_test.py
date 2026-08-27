@@ -168,8 +168,12 @@ def run_smoke_test():
 
             browser.close()
 
-        assert len(outgoing_image_requests) == 0, f'이미지 데이터를 전송하는 네트워크 요청 발견: {outgoing_image_requests}'
-        print('✅ 7. 프라이버시 네트워크 요청 검증 통과 (외부 이미지 전송 0건)')
+        # D9 정책(2026-08-27): 이미지 전송 허용 — 단 프록시(transform)로만 가야 함.
+        allowed_hosts = ('trycloudflare.com', '129.225.191.209:8443', '100.99.168.90:8899')
+        for url in outgoing_image_requests:
+            assert any(h in url for h in allowed_hosts), \
+                f'허용되지 않은 곳으로 이미지 전송: {url}'
+        print(f'✅ 7. 이미지 전송 대상 검증 통과 (프록시로만 전송, {len(outgoing_image_requests)}건)')
 
         if console_errors:
             print('콘솔 에러 목록:', console_errors)
