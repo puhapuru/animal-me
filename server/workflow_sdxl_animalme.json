@@ -1,0 +1,61 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "fixture_face.png"}
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "portrait photo of a person, same face identity preserved, wearing realistic fluffy cat ears headband on top of head, small cat nose makeup, thin drawn-on whiskers on cheeks, cute cosplay style, soft realistic skin texture, natural studio lighting, high quality photo",
+      "clip": ["1", 1]
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "deformed face, distorted identity, unrecognizable face, cartoon, anime, painting, low quality, watermark, full animal head, furry costume, extra ears on face",
+      "clip": ["1", 1]
+    }
+  },
+  "5": {
+    "class_type": "VAEEncode",
+    "inputs": {"pixels": ["9", 0], "vae": ["1", 2]}
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": -1,
+      "steps": 24,
+      "cfg": 6.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.42,
+      "model": ["1", 0],
+      "positive": ["3", 0],
+      "negative": ["4", 0],
+      "latent_image": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {"samples": ["6", 0], "vae": ["1", 2]}
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["7", 0], "filename_prefix": "animalme"}
+  },
+  "9": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "width": 768,
+      "height": 1024,
+      "upscale_method": "lanczos",
+      "crop": "center",
+      "image": ["2", 0]
+    }
+  }
+}

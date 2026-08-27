@@ -230,9 +230,12 @@ function setupEventListeners() {
 
     // 다운로드
     btnDownload.addEventListener('click', handleDownload);
-
     // 공유
     btnShare.addEventListener('click', handleShare);
+
+    // 리얼 변환 (ComfyUI, 홈네트워크)
+    const btnRealRender = document.getElementById('btnRealRender');
+    if (btnRealRender) btnRealRender.addEventListener('click', handleRealRender);
 
     // 다른 사진 올리기 (Reset)
     btnReset.addEventListener('click', handleReset);
@@ -946,6 +949,57 @@ async function handleShare() {
 }
 
 // --- 다른 사진 올리기 (Reset) ---
+// ============================================================
+// 리얼 사진 변환 (ComfyUI SDXL img2img, 2026-08-27 D9 정책)
+// rogue 프록시(8899)에 캔버스를 전송 → SDXL 변환 → 결과를 캔버스에 다시 그림
+// 홈네트워크(Tailscale)에서만 동작. 실패 시 캔버스 모드 유지.
+// ============================================================
+async function handleRealRender() {
+    if (!currentImage || !currentLandmarks) return;
+    const btn = document.getElementById('btnRealRender');
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ 변환 중... (약 30초)';
+
+    try {
+        // 현재 캔버스(캐릭터 오버레이 제외한 보정본 기준)를 전송
+        const dataUrl = resultCanvas.toDataURL('image/png');
+        const animal = ANIMAL_PROFILES[currentAnimalId] || { id: 'cat' };
+
+        const resp = await fetch('http://100.99.168.90:8899/api/transform', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: dataUrl,
+                animal_id: animal.id,
+                strength: 0.55
+            })
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error || `HTTP ${resp.status}`);
+        }
+        const res = await resp.json();
+
+        // 결과 이미지를 새 원본으로 교체 → 특징점 재추출 → 재렌더링
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = res.image;
+        });
+        currentImage = img;
+        showToast('✨ 리얼 변환 완료!');
+        await processFaceImage(img);
+    } catch (err) {
+        console.warn('리얼 변환 실패:', err);
+        showToast('⚠️ 홈 네트워크에서만 사용 가능합니다 (캔버스 모드 유지)');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+    }
+}
+
 function handleReset() {
     currentImage = null;
     currentLandmarks = null;
