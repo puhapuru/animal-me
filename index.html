@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Animal Me — 내 얼굴에 딱 맞는 동물 분장</title>
+    <meta name="description" content="셀카를 올리면 AI가 얼굴 특징을 분석해 가장 닮은 동물로 변신시켜 드립니다! 100% 브라우저 온디바이스 처리.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+</head>
+<body>
+    <!-- Top Privacy Banner -->
+    <header class="privacy-banner" id="privacyBanner">
+        <div class="banner-content">
+            <span class="shield-icon">🔒</span>
+            <span class="banner-text"><strong>100% 안전:</strong> 서버에 사진이 저장되지 않습니다 (모든 분석은 기기 내 브라우저에서만 작동)</span>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="logo">🐾 Animal Me</h1>
+            <p class="subtitle">내 셀카 속 숨겨진 동물상을 찾고 귀여운 분장을 입혀보세요!</p>
+        </header>
+
+        <!-- Loading / Status indicator -->
+        <div id="modelStatus" class="model-status">
+            <span class="spinner-dot"></span>
+            <span id="modelStatusText">AI 모델 로딩 중...</span>
+        </div>
+
+        <!-- Upload View -->
+        <section id="uploadSection" class="card upload-card">
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-icon">📸</div>
+                <h2>사진을 선택하거나 촬영해주세요</h2>
+                <p class="drop-zone-hint">정면을 바라보는 밝고 선명한 얼굴 사진이 가장 좋아요!</p>
+                
+                <div class="upload-buttons">
+                    <label for="fileInput" class="btn btn-primary btn-upload">
+                        <i class="fa-solid fa-image"></i> 사진 선택
+                    </label>
+                    <label for="cameraInput" class="btn btn-secondary btn-camera">
+                        <i class="fa-solid fa-camera"></i> 바로 촬영
+                    </label>
+                </div>
+                
+                <!-- Inputs -->
+                <input type="file" id="fileInput" accept="image/*" class="sr-only">
+                <input type="file" id="cameraInput" accept="image/*" capture="user" class="sr-only">
+            </div>
+
+            <!-- Demo / Sample Faces -->
+            <div class="sample-section">
+                <span class="sample-title">샘플 얼굴로 바로 체험하기:</span>
+                <div class="sample-chips" id="sampleChips">
+                    <button type="button" class="sample-chip" data-sample="cat">🐱 고양이상</button>
+                    <button type="button" class="sample-chip" data-sample="puppy">🐶 강아지상</button>
+                    <button type="button" class="sample-chip" data-sample="fox">🦊 여우상</button>
+                    <button type="button" class="sample-chip" data-sample="bear">🐻 곰상</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Processing View (Hidden initially) -->
+        <section id="processingSection" class="card processing-card hidden">
+            <div class="processing-spinner">
+                <div class="paw-loader">🐾</div>
+            </div>
+            <h3 id="processingTitle">얼굴 특징 분석 중...</h3>
+            <p id="processingDesc">눈꼬리 각도, 얼굴형, 중안부 비율을 계산하고 있어요.</p>
+        </section>
+
+        <!-- Result View (Hidden initially) -->
+        <section id="resultSection" class="card result-card hidden">
+            <!-- Result Badge & Explanation -->
+            <div class="match-header" id="matchHeader">
+                <div class="match-badge" id="matchBadge">
+                    <span class="animal-emoji" id="matchEmoji">🐱</span>
+                    <span class="animal-name" id="matchName">고양이상</span>
+                    <span class="match-percent" id="matchPercent">95% 일치</span>
+                </div>
+                <p class="match-reason" id="matchReason">도도하게 살짝 올라간 눈매와 날렵한 V라인 턱선!</p>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="resultCanvas"></canvas>
+            </div>
+
+            <!-- Customization Controls -->
+            <div class="controls-toolbar">
+                <div class="animal-selector-title">동물 분장 변경:</div>
+                <div class="animal-chips-scroll" id="animalChips">
+                    <!-- Dynamic animal buttons inserted via JS -->
+                </div>
+
+                <div class="toggle-options">
+                    <button type="button" class="btn-toggle active" id="toggleBlush" title="볼터치 켜기/끄기">
+                        🌸 볼터치
+                    </button>
+                    <button type="button" class="btn-toggle active" id="toggleWhiskers" title="수염/무늬 켜기/끄기">
+                        ✨ 수염/무늬
+                    </button>
+                    <button type="button" class="btn-toggle active" id="toggleEars" title="귀 켜기/끄기">
+                        👂 귀
+                    </button>
+                </div>
+            </div>
+
+            <!-- Primary Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-reroll" id="btnReroll">
+                    <i class="fa-solid fa-dice"></i> 다시 하기 (다른 변형)
+                </button>
+                <div class="share-save-group">
+                    <button type="button" class="btn btn-success btn-download" id="btnDownload">
+                        <i class="fa-solid fa-download"></i> PNG 저장
+                    </button>
+                    <button type="button" class="btn btn-primary btn-share" id="btnShare">
+                        <i class="fa-solid fa-share-nodes"></i> 공유하기
+                    </button>
+                </div>
+                <button type="button" class="btn btn-outline btn-reset" id="btnReset">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> 다른 사진 올리기
+                </button>
+            </div>
+        </section>
+
+        <!-- Error / Alert Modal -->
+        <div id="errorModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-icon">🥺</div>
+                <h3 id="modalTitle">얼굴을 찾을 수 없어요</h3>
+                <p id="modalMessage">얼굴이 선명하게 나온 정면 사진으로 다시 시도해주세요!</p>
+                <button type="button" class="btn btn-primary" id="btnModalClose">확인</button>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast hidden">
+            <span id="toastMessage">저장되었습니다!</span>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>© 2026 Animal Me · 온디바이스 AI 동물 분장 · <a href="https://github.com/puhapuru/animal-me" target="_blank" rel="noopener">GitHub</a></p>
+    </footer>
+
+    <!-- Main JavaScript (ES Module) -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
