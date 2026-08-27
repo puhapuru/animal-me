@@ -897,7 +897,8 @@ async function handleShare() {
     const animal = ANIMAL_PROFILES[currentAnimalId] || { name: '동물분장', emoji: '🐾' };
     const shareTitle = 'Animal Me — 내 ' + animal.name + ' 분장';
     const shareText = animal.emoji + ' 나는 ' + animal.name + '! ' + matchReasonEl.textContent + '\n' +
-        'Animal Me에서 온디바이스로 만든 내 동물 분장이에요.';
+        'Animal Me에서 온디바이스로 만든 내 동물 분장이에요.\n' +
+        '👉 너도 해보기: https://puhapuru.github.io/animal-me/';
 
     if (navigator.share) {
         try {
