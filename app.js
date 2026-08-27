@@ -972,9 +972,9 @@ async function handleRealRender() {
         const dataUrl = resultCanvas.toDataURL('image/png');
         const animal = ANIMAL_PROFILES[currentAnimalId] || { id: 'cat' };
 
-        // 단일 프록시 시도 (공개 도메인 연결 전까지 tailscale 우선, 실패시 곧바로 폴백)
+        // 단일 프록시 시도 (공개 HTTPS 경유 — 인터넷 어디서든)
         let res = null;
-        for (const base of ['http://100.99.168.90:8899']) {
+        for (const base of ['https://songs-widely-radar-leslie.trycloudflare.com']) {
             try {
                 const resp = await fetch(base + '/api/transform', {
                     method: 'POST',
