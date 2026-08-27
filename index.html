@@ -97,6 +97,15 @@
                 </div>
 
                 <div class="toggle-options">
+                    <!-- 뽀샵 세기 슬라이더 (2026-08-27) -->
+                    <div class="beauty-control" style="width:100%;margin-bottom:10px;">
+                        <label for="beautyStrength" style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary,#667);">
+                            <span>✨ 뽀샵 · 피부톤 보정</span>
+                            <span id="beautyVal">65%</span>
+                        </label>
+                        <input type="range" id="beautyStrength" min="0" max="100" value="65"
+                               style="width:100%;" />
+                    </div>
                     <button type="button" class="btn-toggle active" id="toggleBlush" title="볼터치 켜기/끄기">
                         🌸 볼터치
                     </button>
@@ -149,6 +158,7 @@
     </footer>
 
     <!-- Main JavaScript (ES Module) -->
+    <script src="beauty.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>

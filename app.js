@@ -243,6 +243,16 @@ function setupEventListeners() {
     });
 
     // 옵션 토글 버튼들
+    // 뽀샵 세기 슬라이더 (2026-08-27) — 값 표시 갱신 + 즉시 재렌더
+    const beautyStrength = document.getElementById('beautyStrength');
+    const beautyVal = document.getElementById('beautyVal');
+    if (beautyStrength) {
+        beautyStrength.addEventListener('input', () => {
+            if (beautyVal) beautyVal.textContent = beautyStrength.value + '%';
+            renderCurrentResult();
+        });
+    }
+
     toggleBlush.addEventListener('click', () => {
         overlayOptions.blush = !overlayOptions.blush;
         toggleBlush.classList.toggle('active', overlayOptions.blush);
@@ -432,9 +442,9 @@ function renderCurrentResult() {
     resultCanvas.width = currentImage.width;
     resultCanvas.height = currentImage.height;
 
-    // 1. 원본 이미지 그리기
+    // 1. 뽀샵·피부톤 보정 적용 후 그리기 (beauty.js)
     ctx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
-    ctx.drawImage(currentImage, 0, 0);
+    ctx.drawImage(applyRetouch(currentImage, getRetouchStrength()), 0, 0);
 
     // 2. 동물 부속 오버레이 렌더링
     drawAnimalOverlay(ctx, currentLandmarks, currentImage.width, currentImage.height, animal, currentVariantIndex, overlayOptions);
