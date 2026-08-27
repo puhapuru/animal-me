@@ -91,7 +91,7 @@ def run_smoke_test():
             banner = page.locator('#privacyBanner')
             assert banner.is_visible(), '프라이버시 배너가 보이지 않습니다.'
             banner_text = banner.inner_text()
-            assert '서버에 사진이 저장되지 않습니다' in banner_text, f'프라이버시 문구 누락: {banner_text}'
+            assert '즉시 폐기' in banner_text, f'프라이버시 문구 누락: {banner_text}'
             print('✅ 1. 프라이버시 배너 확인 완료')
 
             page.set_input_files('#fileInput', str(fixture_face))

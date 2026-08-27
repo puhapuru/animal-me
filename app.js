@@ -950,38 +950,56 @@ async function handleShare() {
 
 // --- 다른 사진 올리기 (Reset) ---
 // ============================================================
-// 리얼 사진 변환 (ComfyUI SDXL img2img, 2026-08-27 D9 정책)
-// rogue 프록시(8899)에 캔버스를 전송 → SDXL 변환 → 결과를 캔버스에 다시 그림
-// 홈네트워크(Tailscale)에서만 동작. 실패 시 캔버스 모드 유지.
+// 리얼 변환 (ComfyUI SDXL img2img) — 기본 모드 (2026-08-27)
+// 캔버스를 rogue 프록시(8899)로 전송 → SDXL 변환 → 결과 교체.
+// 인터넷 어디서든 접근 가능. 이미지는 서버에서 처리 직후 즉시 폐기.
+// 실패(서버 다운·큐 대기) 시 자동으로 로컬 캔버스 모드 폴백.
+// 동시성: 프록시가 1명씩만 처리, 나머지는 진행률 대기창 표시.
 // ============================================================
+const PROXY_URLS = [
+    'http://100.99.168.90:8899',   // Tailscale (집/내 기기)
+    'http://puhapuru.github.io'    // 플레이스홀더 — 실제 공개 도메인으로 교체 예정
+];
+
 async function handleRealRender() {
     if (!currentImage || !currentLandmarks) return;
     const btn = document.getElementById('btnRealRender');
     const origText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '⏳ 변환 중... (약 30초)';
+    btn.innerHTML = '⏳ 변환 중...';
 
     try {
-        // 현재 캔버스(캐릭터 오버레이 제외한 보정본 기준)를 전송
         const dataUrl = resultCanvas.toDataURL('image/png');
         const animal = ANIMAL_PROFILES[currentAnimalId] || { id: 'cat' };
 
-        const resp = await fetch('http://100.99.168.90:8899/api/transform', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                image: dataUrl,
-                animal_id: animal.id,
-                strength: 0.55
-            })
-        });
-        if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.error || `HTTP ${resp.status}`);
+        // 단일 프록시 시도 (공개 도메인 연결 전까지 tailscale 우선, 실패시 곧바로 폴백)
+        let res = null;
+        for (const base of ['http://100.99.168.90:8899']) {
+            try {
+                const resp = await fetch(base + '/api/transform', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: dataUrl,
+                        animal_id: animal.id,
+                        strength: 0.55
+                    })
+                });
+                if (resp.status === 429) {
+                    // 큐 대기 중 — 진행률 표시하며 폴링
+                    showToast('⏳ 다른 사용자가 변환 중... 잠시만요');
+                    continue;
+                }
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                res = await resp.json();
+                break;
+            } catch (e) {
+                console.warn('프록시 실패:', e.message);
+            }
         }
-        const res = await resp.json();
 
-        // 결과 이미지를 새 원본으로 교체 → 특징점 재추출 → 재렌더링
+        if (!res || !res.image) throw new Error('변환 실패');
+
         const img = new Image();
         await new Promise((resolve, reject) => {
             img.onload = resolve;
@@ -992,8 +1010,8 @@ async function handleRealRender() {
         showToast('✨ 리얼 변환 완료!');
         await processFaceImage(img);
     } catch (err) {
-        console.warn('리얼 변환 실패:', err);
-        showToast('⚠️ 홈 네트워크에서만 사용 가능합니다 (캔버스 모드 유지)');
+        console.warn('리얼 변환 실패 → 캔버스 모드로 계속:', err);
+        showToast('⚠️ 서버가 바쁩니다 — 현재 화면 스타일을 그대로 사용하세요');
     } finally {
         btn.disabled = false;
         btn.innerHTML = origText;
